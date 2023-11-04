@@ -1,0 +1,42 @@
+# Visual Studio specific
+.vs/
+Out/
+Temp/
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+!Results/gorge.obj
+!Results/permeability.obj
+!Results/rectilinear.obj
+!Results/spongework.obj
+!Results/superimposed.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
