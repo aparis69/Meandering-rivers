@@ -9,5 +9,8 @@ int main()
 {
 	srand(1234);
 
+	MeanderSimulation simulation;
+	simulation.Step(100);
+
 	return 0;
 }

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "basics.h"
+#include "quadric.h"
+#include "linear.h"
 
 class Cubic{
 protected:
@@ -14,8 +16,6 @@ public:
 
     constexpr double& operator[] (int);
     constexpr double operator[] (int) const;
-
-    int CheckDegree() const;
 
     // Unary operators
 
@@ -40,31 +40,16 @@ public:
     constexpr double operator()(const double&) const;
     constexpr double Derivative(const double&) const;
 
+    Quadric Prime() const;
+    Linear Second() const;
+
     // Solve
     int Solve(double*) const;
     int Solve(double*, const double&, const double&) const;
     int SolveNormalized(double*) const;
 
-    void Range(double&, double&, const double& = 0.0, const double& = 1.0) const;
-
-    double K(const double&, const double&) const;
-
     static Cubic Hermite(const double&, const double&, const double&, const double&);
     static Cubic Bezier(const double&, const double&, const double&, const double&);
-    static Cubic Spline(const double&, const double&, const double&, const double&);
-    static double Interpolation(const double&, const double&, const double&, const double&, const double&);
-
-    static double Smooth(const double&, const double&);
-    static double SmoothCompact(const double&, const double&);
-    static double Smooth(const double&);
-    static double SmoothStep(const double&, const double&, const double&);
-
-    static double Gaussian(const double&, const double&, const double&);
-    static double GaussianThick(const double&, const double&, const double&, const double&);
-
-    // Bernstein
-    static Cubic Bernstein(int);
-    static double Bernstein(int, const double&);
   private:
     static double epsilon; //!< \htmlonly\epsilon;\endhtmlonly value used to check if the cubic term is so close to 0 that the cubic is in fact a quadric.
 };
@@ -203,120 +188,17 @@ inline Cubic& Cubic::operator/=(const double& e)
 }
 
 /*!
-\brief Compute the value of a C<SUP>2</SUP> smooth interpolating function (1-x/r)<SUP>3</SUP>.
-
-It is possible to implement Wyvill's smoothing kernel by passing the squared
-distance to the skeleton and the squared radius to this function. For example,
-given a box skeleton:
-\code
-Vector p(-2.0,3.0,5.0);
-double d=Box(1.0).R(p); // Squared distance to a box
-double r=4.0; // Radius;
-double d=d>r*r?0.0:Cubic::Smooth(d,r*r); // Direct implementation of Wyvill's smoothing kernel
-\endcode
-
-\sa Smooth(const double&,const double&,const double&)
-
-\param x Squared distance.
-\param r Squared radius.
+\brief Computes the first derivative of a cubic, which is a quadric.
 */
-inline double Cubic::Smooth(const double& x, const double& r)
+inline Quadric Cubic::Prime() const
 {
-    return (1.0 - x / r) * (1.0 - x / r) * (1.0 - x / r);
+  return Quadric(3.0 * c[3], 2.0 * c[2], c[1]);
 }
 
 /*!
-\brief Compactly supported smooth interpolating function.
-
-\sa Cubic::Smooth(const double&, const double&), Quadric::SmoothCompact()
-
-\param x Squared distance.
-\param r Squared radius.
+\brief Computes the second derivative of a cubic, which is a linear polynomial.
 */
-inline double Cubic::SmoothCompact(const double& x, const double& r)
+inline Linear Cubic::Second() const
 {
-    return (x > r) ? 0.0 : (1.0 - x / r) * (1.0 - x / r) * (1.0 - x / r);
-}
-
-/*!
-\brief Compute the value of a C<SUP>1</SUP> smooth interpolating function.
-
-The cubic is defined as x<SUP>2</SUP>(3 - 2 x). Its first derivatives at 0.0 and 1.0 are 0.0.
-
-The Lipschitz constant of the smooth quintic over [0,1] is &lambda;=3/2.
-
-\param x Argument in [0,1].
-
-\sa Quintic::Smooth(), Septic::Smooth()
-*/
-inline double Cubic::Smooth(const double& x)
-{
-    return x * x * (3.0 - 2.0 * x);
-}
-
-/*!
-\brief Compute a smooth cubic step.
-
-The code is slightly more efficient than:
-\code
-double y=Cubic::Smooth(Linear::Step(x,a,b));
-\endcode
-\param a, b Interval values.
-\param x Input value.
-\sa Quintic::SmoothStep(), Septic::SmoothStep()
-*/
-inline double Cubic::SmoothStep(const double& x, const double& a, const double& b)
-{
-    if (x < a)
-    {
-        return 0.0;
-    }
-    else if (x > b)
-    {
-        return 1.0;
-    }
-    else
-    {
-        return Cubic::Smooth((x - a) / (b - a));
-    }
-}
-
-/*!
-\brief Compute a compactly supported Gaussian-like pulse.
-
-The function has C<SUP>1</SUP> continuity.
-\sa Quintic::Gaussian()
-
-\param c Center.
-\param r Radius.
-\param x Value.
-*/
-inline double Cubic::Gaussian(const double& c, const double& r, const double& x)
-{
-    double xc = fabs(x - c);
-    if (xc > r) return 0.0;
-    xc /= r;
-    return Cubic::Smooth(1.0 - xc);
-}
-
-/*!
-\brief Compute a compactly supported Gaussian-like pulse with a thick plateau.
-
-The function has C<SUP>1</SUP> continuity.
-\sa Quintic::GaussianThick()
-
-The support has 2 ( r + t ) extent.
-
-\param c Center.
-\param t,r Thickness (plateau) and radius.
-\param x Value.
-*/
-inline double Cubic::GaussianThick(const double& c, const double& t, const double& r, const double& x)
-{
-    double y = fabs(x - c);
-    if (y > r + t) return 0.0;
-    y -= t;
-    if (y < 0.0) return 1.0;
-    y /= r;
-    return Cubic::Smooth(1.0 - y);
+  return Linear(6.0 * c[3], 2.0 * c[2]);
 }

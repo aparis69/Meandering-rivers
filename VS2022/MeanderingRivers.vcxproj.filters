@@ -9,19 +9,37 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
+    <Filter Include="Source Files\Maths">
+      <UniqueIdentifier>{104ca599-5d5c-4b4e-ba34-648feb21aed2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Simulation">
+      <UniqueIdentifier>{709b538d-724e-417e-81b2-9822b074c3ca}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Code\Source\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Code\Source\channel.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\Code\Source\cubic.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Maths</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\Source\linear.cpp">
+      <Filter>Source Files\Maths</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\Source\quadric.cpp">
+      <Filter>Source Files\Maths</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\Source\meanders-channel.cpp">
+      <Filter>Source Files\Simulation</Filter>
     </ClCompile>
     <ClCompile Include="..\Code\Source\cubic-curve.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Maths</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\Source\cubic-curve-set.cpp">
+      <Filter>Source Files\Maths</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\Source\meanders-simulation.cpp">
+      <Filter>Source Files\Simulation</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -38,6 +56,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\Code\Include\cubic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Code\Include\quadric.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Code\Include\linear.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

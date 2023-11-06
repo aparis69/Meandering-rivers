@@ -12,15 +12,22 @@ struct Vector4;
 // Maths utility
 namespace Math
 {
-	const float Pi = 3.14159265358979323846f;
-	const float HalfPi = Pi / 2.0f;
+	const double Pi = 3.14159265358979323846f;
+	const double TwoPiOverThree = 2.0943951023931954923084f;
+	const double FourPiOverThree = 4.1887902047863909846168;
+	const double HalfPi = Pi / 2.0f;
 
-	inline float Angle(int k, int n)
+	inline double Angle(int k, int n)
 	{
 		return (2.0f * Math::Pi * k) / n;
 	}
 
 	inline double Clamp(double x, double a = 0.0f, double b = 1.0f)
+	{
+		return x < a ? a : x > b ? b : x;
+	}
+
+	inline int Clamp(int x, int a, int b)
 	{
 		return x < a ? a : x > b ? b : x;
 	}
@@ -343,10 +350,6 @@ public:
 	{
 		return Vector2(x / k, y / k);
 	}
-	bool operator==(const Vector2& u) const
-	{
-		return (x == u.x && y == u.y);
-	}
 	Vector2 operator-(const Vector2& u) const
 	{
 		return Vector2(x - u.x, y - u.y);
@@ -388,7 +391,19 @@ public:
 	{
 		return Math::Min(x, y);
 	}
+	inline Vector2 Orthogonal() const
+	{
+		return Vector2(-y, x);
+	}
 };
+/*!
+\brief Cross productof two vectors.
+Note that the derminant of a 2-square matrix is the cross product of its two colum vectors.
+*/
+inline double operator/ (const Vector2& u, const Vector2& v)
+{
+	return u.x * v.y - u.y * v.x;
+}
 inline std::ostream& operator<<(std::ostream& stream, const Vector2& u)
 {
 	stream << "(" << u.x << ", " << u.y << ");";
@@ -435,3 +450,20 @@ inline Vector2 Abs(const Vector2& u)
 {
 	return Vector2(u[0] > 0.0 ? u[0] : -u[0], u[1] > 0.0 ? u[1] : -u[1]);
 }
+inline Vector2 operator*(double k, const Vector2& p)
+{
+	return Vector2(p.x * k, p.y * k);
+}
+inline bool operator== (const Vector2& u, const Vector2& v)
+{
+	return ((u.x == v.x) && (u.y == v.y));
+}
+inline bool operator!= (const Vector2& u, const Vector2& v)
+{
+	return (!(u == v));
+}
+inline Vector2 Lerp(const Vector2& a, const Vector2& b, double t)
+{
+	return a + (b - a) * t;
+}
+

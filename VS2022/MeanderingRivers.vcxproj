@@ -127,16 +127,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\Code\Source\channel.cpp" />
+    <ClCompile Include="..\Code\Source\meanders-channel.cpp" />
+    <ClCompile Include="..\Code\Source\cubic-curve-set.cpp" />
     <ClCompile Include="..\Code\Source\cubic-curve.cpp" />
     <ClCompile Include="..\Code\Source\cubic.cpp" />
+    <ClCompile Include="..\Code\Source\linear.cpp" />
     <ClCompile Include="..\Code\Source\main.cpp" />
+    <ClCompile Include="..\Code\Source\meanders-simulation.cpp" />
+    <ClCompile Include="..\Code\Source\quadric.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Code\Include\basics.h" />
     <ClInclude Include="..\Code\Include\cubic.h" />
     <ClInclude Include="..\Code\Include\curve.h" />
+    <ClInclude Include="..\Code\Include\linear.h" />
     <ClInclude Include="..\Code\Include\meanders.h" />
+    <ClInclude Include="..\Code\Include\quadric.h" />
     <ClInclude Include="..\Code\Include\vec.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

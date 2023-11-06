@@ -27,69 +27,57 @@ public:
     double S(const double&, int = 256) const;
     double U(const double&, int = 256) const;
 
-    // Computes the length of the cubic curve
-    double Length(int = 256) const;
-    double Length(const double&, const double&, int = 256) const;
-
     // Evaluates curve
     Vector2 operator()(const double&) const;
     Vector2 Eval(const double&) const;
-
-    // Curvature 
-    double Curvature(const double&) const;
-    double Curvature(const double&, const double&) const;
-
-    // Get bounding box
-    Box2D GetBox() const;
-
-    // Compute distance between point and curve
-    double R(const Vector2&, double&) const;
-
-    Vector2 BezierControl(int) const;
 
 public:
     static CubicCurve2 Hermite(const Vector2&, const Vector2&, const Vector2&, const Vector2&);
     static CubicCurve2 Bezier(const Vector2&, const Vector2&, const Vector2&, const Vector2&);
 };
 
-//! Access curve components
 inline Cubic& CubicCurve2::operator[] (int i)
 {
     if (i == 0) { return x; }
     else { return y; }
 }
 
-//! Access curve components
 inline Cubic CubicCurve2::operator[] (int i) const
 {
     if (i == 0) { return x; }
     else { return y; }
 }
 
-/*!
-\brief Compute the i-th Bézier control point of the curve.
 
-Computations have been optimized.
-\param i Index.
-*/
-inline Vector2 CubicCurve2::BezierControl(int i) const
+
+class CubicCurve2Set
 {
-    if (i == 0)
-    {
-        // Equivalent to c(0.0)
-        return Vector2(x[0], y[0]);
-    }
-    else if (i == 1)
-    {
-        return Vector2(x[0] + x[1] / 3.0, y[0] + y[1] / 3.0);
-    }
-    else if (i == 2)
-    {
-        return Vector2(x[0] + (2.0 * x[1] + x[2]) / 3.0, y[0] + (2.0 * y[1] + y[2]) / 3.0);
-    }
-    else
-    {
-        // Equivalent to c(1.0)
-        return Vector2(x[0] + x[1] + x[2] + x[3], y[0] + y[1] + y[2] + y[3]);
-    }
+protected:
+  std::vector<CubicCurve2> curve; //!< Set of 2D cubic curves.
+  std::vector<double> lengths; //!< Length of every curve.
+  double length = 0.0; //!< Total length.
+public:
+  CubicCurve2Set();
+  explicit CubicCurve2Set(const std::vector<CubicCurve2>&);
+  explicit CubicCurve2Set(const std::vector<Vector2>&, const Vector2& = Vector2(0), const Vector2 & = Vector2(0));
+
+  //! Empty
+  ~CubicCurve2Set() {}
+
+  // Access to members
+  int Size() const;
+  CubicCurve2 operator()(int) const;
+  std::vector<Vector2> GetDiscretisation(const double&) const;
+  std::vector<Vector2> GetDiscretisation(const double&, std::vector<Vector2>&) const;
+  int U(const double&, double&) const;
+};
+
+inline CubicCurve2 CubicCurve2Set::operator()(int i) const
+{
+  return curve.at(i);
+}
+
+inline int CubicCurve2Set::Size() const
+{
+  return int(curve.size());
 }

@@ -363,7 +363,7 @@ inline void Box2D::Poisson(std::vector<Vector2>& p, double r, int n) const
 }
 
 
-// Sphere. Spherical geometric element.
+// Sphere.
 class Sphere
 {
 protected:
@@ -421,6 +421,39 @@ inline void Sphere::Poisson(std::vector<Vector3>& p, double r, int n) const
 			p.push_back(t);
 	}
 }
+
+
+// Segment2
+class Segment2
+{
+protected:
+	Vector2 a, b;
+
+public:
+	inline Segment2() { }
+	inline Segment2(const Vector2& a, const Vector2& b) : a(a), b(b) { }
+
+	inline bool Intersect(const Segment2& e, Vector2& p) const
+	{
+		Vector2 u = b - a;
+		Vector2 v = e.b - e.a;
+		double d = u / v;
+
+		// Segments are parallel
+		if (fabs(d) < 1e-8) return false;
+
+		Vector2 w = a - e.a;
+		double s = (v / w) / d;
+
+		// Test if intersection point lies outside range
+		if (s < 0.0 || s>1.0) return false;
+		double t = (u / w) / d;
+		if (t < 0.0 || t>1.0) return false;
+
+		p = a + u * s;
+		return true;
+	}
+};
 
 
 // ScalarField2D. A 2D field (nx * ny) of scalar values bounded in world space.
@@ -492,6 +525,15 @@ public:
 	*/
 	inline ~ScalarField2D()
 	{
+	}
+
+	/*!
+	\brief
+	*/
+	inline double Slope(const Vector2& p) const
+	{
+		// TODO
+		return 0.0;
 	}
 
 	/*
