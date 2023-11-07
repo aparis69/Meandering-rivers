@@ -138,19 +138,14 @@ std::vector<Vector2> CubicCurve2Set::GetDiscretisation(const double& step) const
 {
   double niveau = 0.0;
   int idCurve = 0;
-
-  // Set of points
   std::vector<Vector2> p;
-  Vector2 last;
 
-  // Start with the very first vertex of the piecewise curve
+  Vector2 last;
   p.push_back(curve[0](0));
   last = curve[0](0);
-
-  //int parcours = 0;                                 // Condition d'arret
   while (true)
   {
-    niveau += step;                              // Position suivante sur la trajectoire
+    niveau += step;
 
     double u;
     idCurve = U(niveau, u);
@@ -159,7 +154,7 @@ std::vector<Vector2> CubicCurve2Set::GetDiscretisation(const double& step) const
     {
       if (last != curve[idCurve](u))
       {
-        p.push_back(curve[idCurve](u));  // Condition d'arret
+        p.push_back(curve[idCurve](u));
         last = curve[idCurve](u);
       }
     }
@@ -172,7 +167,7 @@ std::vector<Vector2> CubicCurve2Set::GetDiscretisation(const double& step) const
   // Append last point of the curve
   if (last != curve[curve.size() - 1](1.0))
   {
-    p.push_back(curve[curve.size() - 1](1.0));  // Condition d'arret
+    p.push_back(curve[curve.size() - 1](1.0));
   }
   return p;
 }
@@ -207,7 +202,7 @@ int CubicCurve2Set::U(const double& s, double& u) const
     l += lengths[i];
   }
 
-  // Extreme case : we reached the end of the curve
+  // Extreme case: we reached the end of the curve
   u = 1.0;
   return int(curve.size()) - 1;
 }

@@ -3,6 +3,7 @@
 #include "basics.h"
 #include "curve.h"
 
+#include <string>
 #include <chrono>
 
 struct MyChrono
@@ -28,7 +29,7 @@ public:
 	}
 };
 
-class Channel 
+class Channel
 {
 private:
 	std::vector<Vector2> pts;
@@ -40,11 +41,13 @@ private:
 public:
 	inline Channel() { }
 	Channel(const std::vector<Vector2>& pts, double w, double d);
-	
+
 	inline std::vector<Vector2>& Points() { return pts; }
+	inline const std::vector<Vector2>& Points() const { return pts; }
 	inline Vector2 Point(int i) const { return pts[i]; }
 	inline double MigrationRate(int i) const { return ptsMigrationRates[i]; }
 	inline double Width() const { return width; }
+
 	int Size() const;
 	double Length() const;
 	double CurvilinearLength() const;
@@ -54,7 +57,7 @@ public:
 	double Curvature(int i) const;
 	double ScaledCurvature(int i) const;
 	CubicCurve2Set ToCubicCurve() const;
-	
+
 	void Resample();
 	void ComputeMigrationRates();
 	void Migrate(const Box2D& domain, const ScalarField2D& terrain);
@@ -68,7 +71,7 @@ private:
 	std::vector<Vector2> GeneratePath(int startIndex, int endIndex) const;
 };
 
-class MeanderSimulation 
+class MeanderSimulation
 {
 private:
 	ScalarField2D terrain;
@@ -78,26 +81,34 @@ public:
 	// Simulation parameters
 	static double Omega;			//!< Constant in migration rate calculation (Howard and Knutson, 1984)
 	static double Gamma;			//!< Constant from Ikeda et al., 1981 and Howard and Knutson, 1984
-	static double K;				//!< Constant in Howard 1984 equation
-	static double K1;				//!< Migration rate constant (m/s)
-	static double Cf;				//!< Dimensionless Chezy friction factor
-	static double Dt;				//!< Delta time (s)
-	static double Kv;				//!< Vertical slope-dependent erosion rate constant (m/s)
-	static double Dens;				//!< Density of water (kg/m3)
-	static double MaxSlope;			//!< Maximum slope
-	static double tAvulsion;		//!< Avulsion local curvature threshold.
-	static double pAvulsion;		//!< Avulsion event probability (given that curvature > tAvulsion).
+	static double K;					//!< Constant in Howard 1984 equation
+	static double K1;					//!< Migration rate constant (m/s)
+	static double Cf;					//!< Dimensionless Chezy friction factor
+	static double Dt;					//!< Delta time (s)
+	static double Kv;					//!< Vertical slope-dependent erosion rate constant (m/s)
+	static double MaxSlope;		//!< Maximum slope
+	static bool PerformAvulsion; // Avulsion flag.
+	static double tAvulsion;	//!< Avulsion local curvature threshold.
+	static double pAvulsion;	//!< Avulsion event probability (given that curvature > tAvulsion).
 	static double ChannelFalloff;	//!< Channel falloff for start and end parts, in [0, 1]
 	static double SamplingDistance;	//!< Maximum distance between points in a channel, in meters.
 
 public:
 	MeanderSimulation();
-	MeanderSimulation(const ScalarField2D& hf);
-	
+	MeanderSimulation(int seed);
+	MeanderSimulation(int seed, const ScalarField2D& hf);
+
+	// User control
 	void AddChannel(const Channel& ch);
+	void TriggerAvulsion();
+
+	// Simulation
 	void Step();
 	void Step(int n);
+
+	// Utility
 	Box2D GetBox() const;
+	void OutputImage(const std::string& path, int width, int height) const;
 
 private:
 	void ComputeMigrationRates();
@@ -105,4 +116,5 @@ private:
 	void ManageCutoffs();
 	void ManageAvulsion();
 	void ResampleChannels();
+	bool SanityCheckChannels(const char* checkedFunction);
 };

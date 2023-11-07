@@ -103,6 +103,9 @@ void Channel::Resample()
 	const int pointCountToRemove = int(pts.size() - newPts.size());
 	for (int j = 0; j < pointCountToRemove; j++)
 		pts.erase(pts.end() - 1);
+
+	ptsLocalMigrationRates.resize(pts.size(), 0.0);
+	ptsMigrationRates.resize(pts.size(), 0.0);
 }
 
 void Channel::ComputeMigrationRates()
@@ -113,21 +116,21 @@ void Channel::ComputeMigrationRates()
 
 void Channel::Migrate(const Box2D& domain, const ScalarField2D& terrain)
 {
-	const std::vector<Vector2>& points = pts;
-	const double channelSize = Length();
+	std::vector<Vector2> outPoints = pts;
+	const double channelSize = Math::Sqr(Length());
 	const double MaxSlopeSqr = Math::Sqr(MeanderSimulation::MaxSlope);
-	for (int i = 1; i < points.size() - 1; i++)
+	for (int i = 1; i < pts.size() - 1; i++)
 	{
-		if (!domain.Contains(points[i]))
+		if (!domain.Contains(pts[i]))
 			continue;
 
 		// Falloff at start/end of section
-		double d1 = SquaredMagnitude(points[i] - points[0]);
-		double d2 = SquaredMagnitude(points[i] - points[points.size() - 1]);
+		double d1 = SquaredMagnitude(pts[i] - pts[0]);
+		double d2 = SquaredMagnitude(pts[i] - pts[pts.size() - 1]);
 		double wf = 1.0 - Math::CubicSmoothCompact(Math::Min(d1, d2), channelSize * MeanderSimulation::ChannelFalloff);
 
 		// Falloff with terrain slope
-		double sq = terrain.Slope(points[i]);
+		double sq = terrain.Slope(pts[i]);
 		double wt = Math::CubicSmoothCompact(sq, MaxSlopeSqr);
 
 		// Combine all falloffs
@@ -135,9 +138,10 @@ void Channel::Migrate(const Box2D& domain, const ScalarField2D& terrain)
 
 		// Point migration
 		Vector2 normalMigration = MigrationDirection(i);
-		pts[i][0] = points[i][0] + w * MeanderSimulation::Dt * ptsMigrationRates[i] * normalMigration[0];
-		pts[i][1] = points[i][1] + w * MeanderSimulation::Dt * ptsMigrationRates[i] * normalMigration[1];
+		outPoints[i][0] = pts[i][0] + w * MeanderSimulation::Dt * ptsMigrationRates[i] * normalMigration[0];
+		outPoints[i][1] = pts[i][1] + w * MeanderSimulation::Dt * ptsMigrationRates[i] * normalMigration[1];
 	}
+	pts = outPoints;
 }
 
 std::vector<Vector2> Channel::DoCutoff(int cutoffIndex, int j)
@@ -161,7 +165,7 @@ std::vector<Vector2> Channel::DoCutoff(int cutoffIndex, int j)
 std::vector<Vector2> Channel::DoAvulsion(int startIndex, const ScalarField2D& bedrock)
 {
 	// Create new path between start and end
-	int endIndex = startIndex + 1 + Random::Integer() % int(pts.size() - startIndex - 1);
+	int endIndex = startIndex + 1 + Random::Integer(int(pts.size() - startIndex - 1));
 	std::vector<Vector2> avulsionPath = GeneratePath(startIndex, endIndex);
 
 	// Create new vector of points for the section
@@ -224,7 +228,6 @@ bool Channel::Intersect(const Segment2& s, int startIndex, Vector2& hit, int& hi
 
 void Channel::ComputeLocalMigrationRates()
 {
-	ptsLocalMigrationRates.resize(pts.size(), 0.0);
 	for (int i = 0; i < pts.size(); i++)
 		ptsLocalMigrationRates[i] = MeanderSimulation::K1 * ScaledCurvature(i);
 }
@@ -290,6 +293,18 @@ void Channel::ComputeTotalMigrationRates()
 
 		ptsMigrationRates[i] = MeanderSimulation::Omega * ptsLocalMigrationRates[i] + MeanderSimulation::Gamma * sumR0 / sumG;
 		ptsMigrationRates[i] = sinuosity * ptsMigrationRates[i];
+
+		/*if (i == 172)
+		{
+			std::cout << ptsLocalMigrationRates[i] << std::endl;
+			std::cout << sumR0 << std::endl;
+			std::cout << sumG << std::endl;
+			std::cout << sinuosity << std::endl;
+			std::cout << MeanderSimulation::Omega * ptsLocalMigrationRates[i] << std::endl;
+			std::cout << MeanderSimulation::Omega * ptsLocalMigrationRates[i] << std::endl;
+			std::cout << MeanderSimulation::Omega * ptsLocalMigrationRates[i] + MeanderSimulation::Gamma * sumR0 / sumG << std::endl;
+			std::cout << sinuosity * (MeanderSimulation::Omega * ptsLocalMigrationRates[i] + MeanderSimulation::Gamma * sumR0 / sumG) << std::endl;
+		}*/
 	}
 }
 

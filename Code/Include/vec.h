@@ -12,8 +12,8 @@ struct Vector4;
 // Maths utility
 namespace Math
 {
-	const double Pi = 3.14159265358979323846f;
-	const double TwoPiOverThree = 2.0943951023931954923084f;
+	const double Pi = 3.14159265358979323846;
+	const double TwoPiOverThree = 2.0943951023931954923084;
 	const double FourPiOverThree = 4.1887902047863909846168;
 	const double HalfPi = Pi / 2.0f;
 
@@ -22,7 +22,7 @@ namespace Math
 		return (2.0f * Math::Pi * k) / n;
 	}
 
-	inline double Clamp(double x, double a = 0.0f, double b = 1.0f)
+	inline double Clamp(double x, double a = 0.0, double b = 1.0)
 	{
 		return x < a ? a : x > b ? b : x;
 	}
@@ -78,6 +78,11 @@ namespace Math
 	inline double Sqr(double x)
 	{
 		return x * x;
+	}
+
+	inline bool IsNumber(double x)
+	{
+		return (x == x);
 	}
 }
 
@@ -255,19 +260,6 @@ inline Vector3 Abs(const Vector3& u)
 {
 	return Vector3(u[0] > 0.0 ? u[0] : -u[0], u[1] > 0.0 ? u[1] : -u[1], u[2] > 0.0 ? u[2] : -u[2]);
 }
-
-/*!
-\brief Returns a vector orthogonal to the argument vector.
-
-The returned orthogonal vector is not computed randomly.
-First, we find the two coordinates of the argument vector with
-maximum absolute value. The orthogonal vector is defined by
-swapping those two coordinates and changing one sign, whereas
-the third coordinate is set to 0.
-
-The returned orthogonal vector lies in the plane orthogonal
-to the first vector.
-*/
 inline Vector3 Vector3::Orthogonal() const
 {
 	Vector3 a = Abs(*this);
@@ -294,12 +286,6 @@ inline Vector3 Vector3::Orthogonal() const
 	a[j] = -operator[](i);
 	return a;
 }
-/*!
-\brief Given a vector, creates two vectors xand y that form an orthogonal basis.
-
-This algorithm pickes the minor axis in order to reduce numerical instability
-\param x, y Returned vectors such that (x,y,n) form an orthonormal basis (provided n is normalized).
-*/
 inline void Vector3::Orthonormal(Vector3& x, Vector3& y) const
 {
 	x = Normalize(Orthogonal());
@@ -312,7 +298,7 @@ struct Vector2
 public:
 	double x, y;
 
-	explicit Vector2() : x(0.0f), y(0.0f) { }
+	explicit Vector2() : x(0.0), y(0.0) { }
 	explicit Vector2(double n) : x(n), y(n) { }
 	explicit Vector2(double x, double y) : x(x), y(y) { }
 	explicit Vector2(const Vector3& v) : x(v.x), y(v.z) { }
@@ -396,10 +382,6 @@ public:
 		return Vector2(-y, x);
 	}
 };
-/*!
-\brief Cross productof two vectors.
-Note that the derminant of a 2-square matrix is the cross product of its two colum vectors.
-*/
 inline double operator/ (const Vector2& u, const Vector2& v)
 {
 	return u.x * v.y - u.y * v.x;
@@ -466,4 +448,3 @@ inline Vector2 Lerp(const Vector2& a, const Vector2& b, double t)
 {
 	return a + (b - a) * t;
 }
-

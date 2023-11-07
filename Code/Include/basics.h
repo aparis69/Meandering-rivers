@@ -1,6 +1,6 @@
 #pragma once
 #include "vec.h"
-#include <time.h>
+//#include "random.h"
 
 #include <vector>
 
@@ -16,19 +16,11 @@ public:
 		// Empty
 	}
 
-	/*!
-	\brief Compute a random number in a given range.
-	\param a min
-	\param b max
-	*/
 	static inline double Uniform(double a, double b)
 	{
 		return a + (b - a) * Uniform();
 	}
 
-	/*!
-	\brief Compute a uniform random number in [0, 1]
-	*/
 	static inline double Uniform()
 	{
 		return double(rand()) / RAND_MAX;
@@ -40,6 +32,14 @@ public:
 	static inline int Integer()
 	{
 		return rand();
+	}
+
+	/*!
+	\brief Compute a random positive integer inferior to a given number.
+	*/
+	static inline int Integer(int max)
+	{
+		return rand() % max;
 	}
 };
 
@@ -330,8 +330,8 @@ we avoid this.
 inline Vector2 Box2D::RandomInside() const
 {
 	Vector2 s = b - a;
-	double randw = Random::Uniform(-1.0f * s[0] / 2.0f, s[0] / 2.0f);
-	double randh = Random::Uniform(-1.0f * s[1] / 2.0f, s[1] / 2.0f);
+	double randw = Random::Uniform(-1.0 * s[0] / 2.0, s[0] / 2.0);
+	double randh = Random::Uniform(-1.0 * s[1] / 2.0, s[1] / 2.0);
 	return (a + b) / 2.0f + Vector2(randw, randh);
 }
 
@@ -392,7 +392,11 @@ inline Sphere::Sphere(const Vector3& c, double r) : center(c), radius(r)
 */
 inline Vector3 Sphere::RandomInside() const
 {
-	return center + Vector3(Random::Uniform(-radius, radius), Random::Uniform(-radius, radius), Random::Uniform(-radius, radius));
+	return center + Vector3(
+		Random::Uniform(-radius, radius),
+		Random::Uniform(-radius, radius),
+		Random::Uniform(-radius, radius)
+	);
 }
 
 /*!
@@ -681,6 +685,21 @@ public:
 			+ (1 - localU) * localV * v2
 			+ localU * (1 - localV) * v4
 			+ localU * localV * v3;
+	}
+
+	/*!
+	\brief
+	*/
+	inline void VertexToInteger(const Vector2& p, int& i, int& j) const
+	{
+		Vector2 q = p - box.Vertex(0);
+		Vector2 d = box.Vertex(1) - box.Vertex(0);
+
+		double u = q[0] / d[0];
+		double v = q[1] / d[1];
+
+		j = int(u * (nx - 1));
+		i = int(v * (ny - 1));
 	}
 
 	/*!
