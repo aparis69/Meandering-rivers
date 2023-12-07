@@ -23,10 +23,10 @@ If you use this code in any way, please credit the original article:
   author = {Paris, Axel and Gu{\'e}rin, Eric and Collon, Pauline and Galin, Eric},
   title = {Authoring and simulating meandering rivers},
   journal = {ACM Transactions on Graphics (Proceedings of Siggraph Asia 2023)},
-  volume = {},
-  number = {},
+  volume = {42},
+  number = {6},
   year = {2023},
-  pages = {}
+  pages = {1--14}
 }
 ```	
 
