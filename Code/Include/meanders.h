@@ -79,17 +79,16 @@ private:
 
 public:
 	// Simulation parameters
-	static double Omega;			//!< Constant in migration rate calculation (Howard and Knutson, 1984)
-	static double Gamma;			//!< Constant from Ikeda et al., 1981 and Howard and Knutson, 1984
-	static double K;					//!< Constant in Howard 1984 equation
-	static double K1;					//!< Migration rate constant (m/s)
-	static double Cf;					//!< Dimensionless Chezy friction factor
-	static double Dt;					//!< Delta time (s)
-	static double Kv;					//!< Vertical slope-dependent erosion rate constant (m/s)
-	static double MaxSlope;		//!< Maximum slope
-	static bool PerformAvulsion; // Avulsion flag.
-	static double tAvulsion;	//!< Avulsion local curvature threshold.
-	static double pAvulsion;	//!< Avulsion event probability (given that curvature > tAvulsion).
+	static double Omega;					//!< Constant in migration rate calculation (Howard and Knutson, 1984)
+	static double Gamma;					//!< Constant from Ikeda et al., 1981 and Howard and Knutson, 1984
+	static double K;							//!< Constant in Howard 1984 equation
+	static double K1;							//!< Migration rate constant (m/s)
+	static double Cf;							//!< Dimensionless Chezy friction factor
+	static double Dt;							//!< Delta time (s)
+	static double Kv;							//!< Vertical slope-dependent erosion rate constant (m/s)
+	static double MaxSlope;				//!< Maximum terrain slope
+	static double tAvulsion;			//!< Avulsion migration rate threshold.
+	static double tAvulsionLength;//!< Minimum channel size for an avulsion to occur.
 	static double ChannelFalloff;	//!< Channel falloff for start and end parts, in [0, 1]
 	static double SamplingDistance;	//!< Maximum distance between points in a channel, in meters.
 
@@ -111,6 +110,7 @@ public:
 	void OutputImage(const std::string& path, int width, int height) const;
 
 private:
+	void EnsureCoherentFlow(const std::vector<Vector2>& path);
 	void ComputeMigrationRates();
 	void MigrateAllChannels();
 	void ManageCutoffs();

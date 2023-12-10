@@ -11,9 +11,8 @@ double MeanderSimulation::K1 = 60.0 / (365.0 * 24.0 * 60.0 * 60.0);
 double MeanderSimulation::Dt = 9460800.0;
 double MeanderSimulation::MaxSlope = 0.1;
 double MeanderSimulation::Kv = 1.0e-12;
-bool MeanderSimulation::PerformAvulsion = false;
 double MeanderSimulation::tAvulsion = 1e-6;
-double MeanderSimulation::pAvulsion = 0.01;
+double MeanderSimulation::tAvulsionLength = 2500.0;
 double MeanderSimulation::ChannelFalloff = 0.05;
 double MeanderSimulation::SamplingDistance = 50.0;
 
@@ -83,7 +82,32 @@ curvature in absolute value.
 */
 void MeanderSimulation::TriggerAvulsion()
 {
-	// TODO
+	// Store [channel index, point index in channel]
+	std::vector<std::pair<int, int>> candidatePointsInSections;
+	for (int i = 0; i < channels.size(); i++)
+	{
+		// Check that the section is not too small
+		if (channels[i].Length() < tAvulsionLength)
+			continue;
+		const int padding = 10;
+		for (int j = 1; j < channels[i].Size() - padding; j++)
+		{
+			if (Math::Abs(channels[i].MigrationRate(j)) < tAvulsion)
+				continue;
+			candidatePointsInSections.push_back({ i, j });
+		}
+	}
+
+	if (candidatePointsInSections.empty())
+		return;
+
+	// Stochastically choose starting index in all candidates
+	const int randomIndex = Random::Integer(int(candidatePointsInSections.size()));
+	const std::pair<int, int> avulsionData = candidatePointsInSections[randomIndex];
+
+	std::vector<Vector2> newPath = channels[avulsionData.first].DoAvulsion(avulsionData.second, terrain);
+	EnsureCoherentFlow(newPath);
+	ResampleChannels();
 }
 
 /*!
@@ -100,12 +124,6 @@ void MeanderSimulation::Step()
 	ManageCutoffs();
 	assert(SanityCheckChannels("ManageCutoffs"));
 
-	if (MeanderSimulation::PerformAvulsion)
-	{
-		ManageAvulsion();
-		assert(SanityCheckChannels("ManageAvulsion"));
-	}
-
 	ResampleChannels();
 	assert(SanityCheckChannels("ResampleChannels"));
 }
@@ -117,6 +135,26 @@ void MeanderSimulation::Step(int n)
 {
 	for (int i = 0; i < n; i++)
 		Step();
+}
+
+/*!
+\brief Ensure a coherent flow in the terrain along a given path.
+Put simply, this function makes sure that the elevation is decreasing along the trajectory.
+\param path the trajectory
+*/
+void MeanderSimulation::EnsureCoherentFlow(const std::vector<Vector2>& path)
+{
+	const double radius = Magnitude(terrain.CellDiagonal());
+	for (int i = 1; i < path.size(); i++)
+	{
+		double d = terrain.GetValueBilinear(path[i - 1]) - terrain.GetValueBilinear(path[i]);
+		if (d < 0)
+		{
+			int a, b;
+			terrain.VertexToInteger(path[i], a, b);
+			terrain.Set(a, b, terrain.GetValueBilinear(path[i - 1]) - 5.0);
+		}
+	}
 }
 
 /*!
@@ -186,39 +224,6 @@ void MeanderSimulation::ManageCutoffs()
 /*!
 \brief
 */
-void MeanderSimulation::ManageAvulsion()
-{
-	for (auto& sec : channels)
-	{
-		// Check that the section is not too small
-		// 50m x 50 points = 2.5km minimum for an avulsion to occur
-		if (sec.Size() < 50)
-			continue;
-
-		const int padding = 10;
-		for (int i = 1; i < sec.Size() - padding; i++)
-		{
-			// Avulsion probability is a function of total migration rate
-			if (sec.MigrationRate(i) < tAvulsion)
-				continue;
-			if (Random::Uniform() < pAvulsion)
-			{
-				// Generate the new path
-				std::vector<Vector2> path = sec.DoAvulsion(i, terrain);
-
-				// Carve terrain along generated path to ensure correct flow
-				//EnsureCorrectFlow(path);
-
-				// Only one avulsion per step on a given section
-				break;
-			}
-		}
-	}
-}
-
-/*!
-\brief
-*/
 void MeanderSimulation::ResampleChannels()
 {
 	for (int i = 0; i < channels.size(); i++)
@@ -233,15 +238,15 @@ void MeanderSimulation::ResampleChannels()
 */
 void MeanderSimulation::OutputImage(const std::string& path, int width, int height) const
 {
-	auto rasterizeBoxFunc = [](Grid2<Vector3>& img, int px, int pxx, int py, int pyy) 
+	auto rasterizeBoxFunc = [](Grid2<Vector3>& img, int px, int pxx, int py, int pyy)
 	{
-			int px0 = px;
-			int py0 = py;
-			for (px = px0; px < Math::Min(pxx, img.Width()); px++)
-			{
-				for (py = py0; py < Math::Min(pyy, img.Height()); py++)
-					img(px, py) = Vector3(1.0, 1.0, 1.0);
-			}
+		int px0 = px;
+		int py0 = py;
+		for (px = px0; px < Math::Min(pxx, img.Width()); px++)
+		{
+			for (py = py0; py < Math::Min(pyy, img.Height()); py++)
+				img(px, py) = Vector3(1.0, 1.0, 1.0);
+		}
 	};
 
 	const Box2D domain = GetBox();

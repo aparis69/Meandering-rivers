@@ -217,6 +217,7 @@ public:
 	explicit Box2D();
 	explicit Box2D(const Vector2& A, const Vector2& B);
 	explicit Box2D(const Vector2& C, double R);
+	explicit Box2D(double width, double height);
 	explicit Box2D(const Box& b);
 
 	bool Contains(const Vector2&) const;
@@ -257,6 +258,15 @@ inline Box2D::Box2D(const Vector2& C, double R)
 	Vector2 RR = Vector2(R);
 	a = C - RR;
 	b = C + RR;
+}
+
+/*!
+\brief Constructor.
+*/
+inline Box2D::Box2D(double width, double height)
+{
+	a = Vector2(-width / 2.0, -height / 2.0);
+	b = Vector2(width / 2.0, height / 2.0);
 }
 
 /*!
@@ -724,6 +734,17 @@ public:
 	inline void Set(int index, double v)
 	{
 		values[index] = v;
+	}
+
+	/*
+	\brief
+	*/
+	inline Vector2 CellDiagonal()
+	{
+		Vector2 cellDiag;
+		cellDiag.x = (box.Vertex(1).x - box.Vertex(0).x) / (nx - 1);
+		cellDiag.y = (box.Vertex(1).y - box.Vertex(0).y) / (ny - 1);
+		return cellDiag;
 	}
 
 	/*!

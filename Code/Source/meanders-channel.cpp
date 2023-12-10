@@ -318,15 +318,17 @@ std::vector<Vector2> Channel::GeneratePath(int startIndex, int endIndex) const
 	Vector2 perturbDir = Vector2(0.0); // Matrix2::Rotation(Math::DegreeToRadian(angle))* dir;
 
 	Vector2 p = start;
+	const double totalLength = SquaredMagnitude(start - end);
 	std::vector<Vector2> path;
-	while (SquaredMagnitude(p - end) > Math::Sqr(50.0))
+	while (SquaredMagnitude(p - end) > Math::Sqr(MeanderSimulation::SamplingDistance))
 	{
 		dir = Normalize(end - p);
-		double t = 1.0 - (SquaredMagnitude(p - end) / SquaredMagnitude(start - end));
+		double t = 1.0 - (SquaredMagnitude(p - end) / totalLength);
 		Vector2 d = Lerp(perturbDir, dir, t);
-		p = p + d * 50.0;
-		p = p + Vector2(Random::Uniform(-10, 10), Random::Uniform(-10, 10));
+		p = p + d * MeanderSimulation::SamplingDistance;
+		p = p + Vector2(Random::Uniform(-10.0, 10.0), Random::Uniform(-10.0, 10.0));
 		path.push_back(p);
 	}
+
 	return path;
 }
