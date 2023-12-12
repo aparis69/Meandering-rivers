@@ -84,8 +84,22 @@ namespace Math
 	{
 		return (x == x);
 	}
-}
 
+	inline double Bilinear(double a00, double a10, double a11, double a01, double u, double v)
+	{
+		return (1 - u) * (1 - v) * a00 + (1 - u) * (v) * a01 + (u) * (1 - v) * a10 + (u) * (v) * a11;
+	}
+
+	inline double Fract(double x)
+	{
+		return x - floor(x);
+	}
+
+	inline double DegreeToRadian(double a)
+	{
+		return a * Math::Pi / 180.0;
+	}
+}
 
 /* Vector3 */
 struct Vector3
@@ -111,15 +125,24 @@ public:
 	}
 	Vector3 operator-= (const Vector3& v)
 	{
-		return Vector3(x - v.x, y - v.y, z - v.z);
+		x -= v.x;
+		y -= v.y;
+		z -= v.z;
+		return *this;
 	}
 	Vector3 operator*= (double f)
 	{
-		return Vector3(x * f, y * f, z * f);
+		x *= f;
+		y *= f;
+		z *= f;
+		return *this;
 	}
 	Vector3 operator/= (double f)
 	{
-		return Vector3(x / f, y / f, z / f);
+		x /= f;
+		y /= f;
+		z /= f;
+		return *this;
 	}
 	Vector3 operator*(const Vector3& u) const
 	{
@@ -291,6 +314,10 @@ inline void Vector3::Orthonormal(Vector3& x, Vector3& y) const
 	x = Normalize(Orthogonal());
 	y = Normalize(Cross(*this, x));
 }
+inline Vector3 Bilinear(const Vector3& a00, const Vector3& a10, const Vector3& a11, const Vector3& a01, double u, double v)
+{
+	return (1 - u) * (1 - v) * a00 + (1 - u) * (v)*a01 + (u) * (1 - v) * a10 + (u) * (v)*a11;
+}
 
 /* Vector2 */
 struct Vector2
@@ -310,19 +337,27 @@ public:
 
 	Vector2 operator+= (const Vector2& v)
 	{
-		return Vector2(x + v.x, y + v.y);
+		x += v.x;
+		y += v.y;
+		return *this;
 	}
 	Vector2 operator-= (const Vector2& v)
 	{
-		return Vector2(x - v.x, y - v.y);
+		x -= v.x;
+		y -= v.y;
+		return *this;
 	}
 	Vector2 operator*= (double f)
 	{
-		return Vector2(x * f, y * f);
+		x *= f;
+		y *= f;
+		return *this;
 	}
 	Vector2 operator/= (double f)
 	{
-		return Vector2(x / f, y / f);
+		x /= f;
+		y /= f;
+		return *this;
 	}
 	Vector2 operator*(const Vector2& v) const
 	{
@@ -447,4 +482,35 @@ inline bool operator!= (const Vector2& u, const Vector2& v)
 inline Vector2 Lerp(const Vector2& a, const Vector2& b, double t)
 {
 	return a + (b - a) * t;
+}
+inline Vector2 Bilinear(const Vector2& a00, const Vector2& a10, const Vector2& a11, const Vector2& a01, double u, double v)
+{
+	return (1 - u) * (1 - v) * a00 + (1 - u) * (v)*a01 + (u) * (1 - v) * a10 + (u) * (v)*a11;
+}
+
+
+/* Matrix2 */
+struct Matrix2
+{
+public:
+	double c[4];
+
+	inline Matrix2() { }
+	inline Matrix2(double x0, double x1, double x2, double x3)
+	{
+		c[0] = x0;
+		c[1] = x1;
+		c[2] = x2;
+		c[3] = x3;
+	}
+	inline Vector2 operator*(const Vector2& v) const
+	{
+		return Vector2(v[0] * c[0] + v[1] * c[2], v[0] * c[1] + v[1] * c[3]);
+	}
+};
+inline Matrix2 RotationMatrix(double a)
+{
+	double c = cos(a);
+	double s = sin(a);
+	return Matrix2(c, s, -s, c);
 }

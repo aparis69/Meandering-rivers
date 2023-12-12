@@ -1,6 +1,6 @@
 #pragma once
 #include "vec.h"
-//#include "random.h"
+#include "grid2.h"
 
 #include <vector>
 
@@ -542,12 +542,15 @@ public:
 	}
 
 	/*!
-	\brief
+	\brief Compute the gradient field.
 	*/
-	inline double Slope(const Vector2& p) const
+	inline Grid2<Vector2> GradientField() const
 	{
-		// TODO
-		return 0.0;
+		Grid2<Vector2> ret(nx, ny);
+		for (int i = 0; i < nx; i++)
+			for (int j = 0; j < ny; j++)
+				ret(i, j) = Gradient(i, j);
+		return ret;
 	}
 
 	/*
@@ -628,10 +631,10 @@ public:
 	/*!
 	\brief Utility.
 	*/
-	inline void ToIndex2D(int index, int& i, int& j) const
+	inline void ToIndex2D(int k, int& i, int& j) const
 	{
-		i = index / nx;
-		j = index % nx;
+		i = k % nx;
+		j = k / nx;
 	}
 
 	/*!
@@ -639,7 +642,7 @@ public:
 	*/
 	inline int ToIndex1D(int i, int j) const
 	{
-		return i * nx + j;
+		return j * nx + i;
 	}
 
 	/*!
@@ -708,8 +711,8 @@ public:
 		double u = q[0] / d[0];
 		double v = q[1] / d[1];
 
-		j = int(u * (nx - 1));
-		i = int(v * (ny - 1));
+		i = int(u * (nx - 1));
+		j = int(v * (ny - 1));
 	}
 
 	/*!

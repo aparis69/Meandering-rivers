@@ -9,7 +9,7 @@ double MeanderSimulation::K = 1.0;
 double MeanderSimulation::Cf = 0.011;
 double MeanderSimulation::K1 = 60.0 / (365.0 * 24.0 * 60.0 * 60.0);
 double MeanderSimulation::Dt = 9460800.0;
-double MeanderSimulation::MaxSlope = 0.1;
+double MeanderSimulation::MaxSlope = 1.0;
 double MeanderSimulation::Kv = 1.0e-12;
 double MeanderSimulation::tAvulsion = 1e-6;
 double MeanderSimulation::tAvulsionLength = 2500.0;
@@ -32,6 +32,7 @@ MeanderSimulation::MeanderSimulation()
 MeanderSimulation::MeanderSimulation(int seed)
 {
 	terrain = ScalarField2D(256, 256, Box2D(Vector2(0.0), 2500.0));
+	terrainGradient = terrain.GradientField();
 	srand(seed);
 }
 
@@ -41,7 +42,7 @@ MeanderSimulation::MeanderSimulation(int seed)
 \param hf the terrain
 */
 MeanderSimulation::MeanderSimulation(int seed, const ScalarField2D& hf)
-	: terrain(hf)
+	: terrain(hf), terrainGradient(hf.GradientField())
 {
 	srand(seed);
 }
@@ -73,6 +74,15 @@ void MeanderSimulation::AddChannel(const Channel& ch)
 
 	// Resample the channel
 	channels[channels.size() - 1].Resample();
+}
+
+/*!
+\brief Add a point constraint to the simulation.
+\param c the constraint
+*/
+void MeanderSimulation::AddPointConstraint(const PointConstraint& c)
+{
+	constraints.push_back(c);
 }
 
 /*!
@@ -175,7 +185,7 @@ void MeanderSimulation::MigrateAllChannels()
 	for (int i = 0; i < results.size(); i++)
 	{
 		if (results[i].Size() > 3)
-			results[i].Migrate(GetBox(), terrain);
+			results[i].Migrate(GetBox(), terrainGradient, constraints);
 	}
 	channels = results;
 }
@@ -240,11 +250,11 @@ void MeanderSimulation::OutputImage(const std::string& path, int width, int heig
 {
 	auto rasterizeBoxFunc = [](Grid2<Vector3>& img, int px, int pxx, int py, int pyy)
 	{
-		int px0 = px;
-		int py0 = py;
-		for (px = px0; px < Math::Min(pxx, img.Width()); px++)
+		const int px0 = px;
+		const int py0 = py;
+		for (px = px0; px < Math::Min(pxx, img.Height()); px++)
 		{
-			for (py = py0; py < Math::Min(pyy, img.Height()); py++)
+			for (py = py0; py < Math::Min(pyy, img.Width()); py++)
 				img(px, py) = Vector3(1.0, 1.0, 1.0);
 		}
 	};
@@ -252,6 +262,23 @@ void MeanderSimulation::OutputImage(const std::string& path, int width, int heig
 	const Box2D domain = GetBox();
 	const ScalarField2D dummy = ScalarField2D(width, height, domain);
 	Grid2<Vector3> image(width, height, Vector3(0.0));
+
+	// Rasterize heightfield
+	double a = terrain.Min();
+	double b = terrain.Max();
+	for (int i = 0; i < image.Width(); i++)
+	{
+		for (int j = 0; j < image.Height(); j++)
+		{
+			double u = double(i) / double(image.Width() - 1);
+			double v = double(j) / double(image.Height() - 1);
+			double h = terrain.Get(int(u * (terrain.SizeX() - 1)), int(v * (terrain.SizeY() - 1)));
+			h = (h - a) / (b - a);
+			image(i, j) = Vector3(h, h, h);
+		}
+	}
+
+	// Rasterize channels on top of heightfield
 	for (const auto& ch : channels)
 	{
 		// Rasterize all points as small boxes
@@ -259,7 +286,7 @@ void MeanderSimulation::OutputImage(const std::string& path, int width, int heig
 		for (int i = 0; i < pts.size(); i++)
 		{
 			int px, py;
-			dummy.VertexToInteger(pts[i], px, py);
+			dummy.VertexToInteger(pts[i], py, px);
 			rasterizeBoxFunc(image, px, px + 2, py, py + 2);
 		}
 	}
@@ -272,18 +299,16 @@ void MeanderSimulation::OutputImage(const std::string& path, int width, int heig
 		std::cout << "Couldn't write to file - exiting" << std::endl;
 		return;
 	}
-	fprintf(fp, "P6\n%d %d\n255\n", image.Width(), image.Height());
+	fprintf(fp, "P2\n%d %d\n255\n", image.Width(), image.Height());
 	for (int i = 0; i < image.Width(); i++)
 	{
 		for (int j = 0; j < image.Height(); j++)
 		{
-			static unsigned char color[3];
 			Vector3 c = image(i, j);
-			color[0] = ((int)c[0] * 255) % 256;
-			color[1] = ((int)c[1] * 255) % 256;
-			color[2] = ((int)c[2] * 255) % 256;
-			(void)fwrite(color, 1, 3, fp);
+			int grey = (int(c[0] * 255.0)) % 256;
+			fprintf(fp, "%d ", grey);
 		}
+		fprintf(fp, "\n");
 	}
 	fclose(fp);
 }

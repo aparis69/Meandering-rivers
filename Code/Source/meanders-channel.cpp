@@ -1,8 +1,11 @@
 #include "meanders.h"
 
-Channel::Channel(const std::vector<Vector2>& pts, double w, double d)
-	: pts(pts), width(w), depth(d)
+Channel::Channel(const std::vector<Vector2>& pts, double w)
+	: pts(pts), width(w)
 {
+	// River depth can be deduced from width (Konsoer et al. 2013, see Sylvester 2019 supplementary material)
+	depth = pow(width / 18.8, 1.0 / 1.41);
+	depth = Math::Max(1.0, depth);
 	ptsMigrationRates.resize(pts.size(), 0.0);
 }
 
@@ -42,9 +45,30 @@ Vector2 Channel::Tangent(int i) const
 		return (pts.at(i + 1) - pts.at(i - 1)) / 2.0;
 }
 
-Vector2 Channel::MigrationDirection(int i) const
+Vector2 Channel::Normal(int i) const
 {
-		return -Normalize(Tangent(i).Orthogonal());
+	return Tangent(i).Orthogonal();
+}
+
+Vector2 Channel::MigrationDirection(int i, const std::vector<PointConstraint>& constraints) const
+{
+	// Base direction is normal to the curve
+	Vector2 dir = -Normalize(Normal(i));
+
+	// Modify based on user constraints
+	const Vector2 p = Point(i);
+	double nb = 1.0;
+	for (int k = 0; k < constraints.size(); k++)
+	{
+		Vector2 d = constraints[k].Direction(p);
+		if (d != Vector2(0, 0))
+		{
+			dir += d;
+			nb += 1.0;
+		}
+	}
+	dir /= nb;
+	return dir;
 }
 
 double Channel::Curvature(int i) const
@@ -114,7 +138,10 @@ void Channel::ComputeMigrationRates()
 	ComputeTotalMigrationRates();
 }
 
-void Channel::Migrate(const Box2D& domain, const ScalarField2D& terrain)
+void Channel::Migrate(
+	const Box2D& domain, 
+	const Grid2<Vector2>& terrainGrad,
+	const std::vector<PointConstraint>& constraints)
 {
 	std::vector<Vector2> outPoints = pts;
 	const double channelSize = Math::Sqr(Length());
@@ -130,14 +157,17 @@ void Channel::Migrate(const Box2D& domain, const ScalarField2D& terrain)
 		double wf = 1.0 - Math::CubicSmoothCompact(Math::Min(d1, d2), channelSize * MeanderSimulation::ChannelFalloff);
 
 		// Falloff with terrain slope
-		double sq = terrain.Slope(pts[i]);
+		Vector2 q = pts[i] - domain[0];
+		double u = q[0] / (domain[1].x - domain[0].x);
+		double v = q[1] / (domain[1].y - domain[0].y);
+		double sq = SquaredMagnitude(terrainGrad.BilinearValue(v, u));
 		double wt = Math::CubicSmoothCompact(sq, MaxSlopeSqr);
 
 		// Combine all falloffs
 		double w = wf * wt;
 
 		// Point migration
-		Vector2 normalMigration = MigrationDirection(i);
+		Vector2 normalMigration = MigrationDirection(i, constraints);
 		outPoints[i][0] = pts[i][0] + w * MeanderSimulation::Dt * ptsMigrationRates[i] * normalMigration[0];
 		outPoints[i][1] = pts[i][1] + w * MeanderSimulation::Dt * ptsMigrationRates[i] * normalMigration[1];
 	}
@@ -244,15 +274,7 @@ void Channel::ComputeTotalMigrationRates()
 	for (int i = 0; i < lengths.size() - 1; i++)
 	{
 		lengths[i] = l;
-		double d = Magnitude(pts[i] - pts[i + 1]);
-		/*if (Math::IsNumber(d) == false)
-		{
-			std::cout << points[i].p << std::endl;
-			std::cout << points[i + 1].p << std::endl;
-			std::cout << d << std::endl;
-			std::cout << "LENGTH PROBLEM" << std::endl;
-		}*/
-		l = l + d;
+		l = l + Magnitude(pts[i] - pts[i + 1]);;
 	}
 	lengths[lengths.size() - 1] = l;
 
@@ -293,18 +315,6 @@ void Channel::ComputeTotalMigrationRates()
 
 		ptsMigrationRates[i] = MeanderSimulation::Omega * ptsLocalMigrationRates[i] + MeanderSimulation::Gamma * sumR0 / sumG;
 		ptsMigrationRates[i] = sinuosity * ptsMigrationRates[i];
-
-		/*if (i == 172)
-		{
-			std::cout << ptsLocalMigrationRates[i] << std::endl;
-			std::cout << sumR0 << std::endl;
-			std::cout << sumG << std::endl;
-			std::cout << sinuosity << std::endl;
-			std::cout << MeanderSimulation::Omega * ptsLocalMigrationRates[i] << std::endl;
-			std::cout << MeanderSimulation::Omega * ptsLocalMigrationRates[i] << std::endl;
-			std::cout << MeanderSimulation::Omega * ptsLocalMigrationRates[i] + MeanderSimulation::Gamma * sumR0 / sumG << std::endl;
-			std::cout << sinuosity * (MeanderSimulation::Omega * ptsLocalMigrationRates[i] + MeanderSimulation::Gamma * sumR0 / sumG) << std::endl;
-		}*/
 	}
 }
 
@@ -315,7 +325,7 @@ std::vector<Vector2> Channel::GeneratePath(int startIndex, int endIndex) const
 
 	Vector2 dir = Normalize(end - start);
 	double angle = Random::Uniform(-35.0, 35.0);
-	Vector2 perturbDir = Vector2(0.0); // Matrix2::Rotation(Math::DegreeToRadian(angle))* dir;
+	Vector2 perturbDir = RotationMatrix(Math::DegreeToRadian(angle)) * dir;
 
 	Vector2 p = start;
 	const double totalLength = SquaredMagnitude(start - end);

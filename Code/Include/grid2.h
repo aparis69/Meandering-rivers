@@ -1,3 +1,5 @@
+#pragma once
+
 #include <vector>
 
 template<typename T>
@@ -18,13 +20,11 @@ public:
 	{
 		return data[ToIndex1D(i, j)];
 	}
-
 	inline T& operator()(int i)
 	{
 		return data[i];
 	}
-	inline T operator()(int i, int j) const
-	{
+	inline T at(int i, int j) const {
 		return data[ToIndex1D(i, j)];
 	}
 
@@ -35,14 +35,30 @@ public:
 		return data[i];
 	}
 
+	inline T BilinearValue(double u, double v) const {
+		const int i = int(u * (nx - 1));
+		const int j = int(v * (ny - 1));
+		
+		u = Math::Fract(u * double(nx - 1));
+		v = Math::Fract(v * double(ny - 1));
+		
+		return Bilinear(
+			at(i, j),
+			at(i + 1, j),
+			at(i + 1, j + 1),
+			at(i, j + 1),
+			u, v
+		);
+	}
+
 	inline int ToIndex1D(int i, int j) const
 	{
 		return j * nx + i;
 	}
 	inline void ToIndex2D(int k, int& i, int& j) const
 	{
-		j = k / nx;
 		i = k % nx;
+		j = k / nx;
 	}
 	inline bool Inside(int i, int j) const
 	{
@@ -50,8 +66,6 @@ public:
 	}
 
 	inline void* GetData() { return data.data(); }
-	inline int Size() const { return nx * ny; }
-	inline size_t ByteSize() const { return Size() * sizeof(T); }
 	inline int Width() const { return nx; }
 	inline int Height() const { return ny; }
 

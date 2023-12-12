@@ -29,6 +29,28 @@ public:
 	}
 };
 
+struct PointConstraint
+{
+public:
+	Vector2 c;
+	double r;
+	double e;
+
+	inline PointConstraint(const Vector2& c, double r, double e) : c(c), r(r), e(e) { }
+	inline double Intensity(const Vector2& p) const
+	{
+		double w = Math::CubicSmoothCompact(SquaredMagnitude(p - c), r * r);
+		return e * w;
+	}
+	inline Vector2 Direction(const Vector2& p) const
+	{
+		double epsilon = 1e-2;
+		double x = Intensity(Vector2(p[0] + epsilon, p[1])) - Intensity(Vector2(p[0] - epsilon, p[1]));
+		double y = Intensity(Vector2(p[0], p[1] + epsilon)) - Intensity(Vector2(p[0], p[1] - epsilon));
+		return (Vector2(x, y) / (2.0 * epsilon));
+	}
+};
+
 class Channel
 {
 private:
@@ -40,7 +62,7 @@ private:
 
 public:
 	inline Channel() { }
-	Channel(const std::vector<Vector2>& pts, double w, double d);
+	Channel(const std::vector<Vector2>& pts, double w);
 
 	inline std::vector<Vector2>& Points() { return pts; }
 	inline const std::vector<Vector2>& Points() const { return pts; }
@@ -53,14 +75,19 @@ public:
 	double CurvilinearLength() const;
 	double Sinuosity();
 	Vector2 Tangent(int i) const;
-	Vector2 MigrationDirection(int i) const;
+	Vector2 Normal(int i) const;
+	Vector2 MigrationDirection(int i, const std::vector<PointConstraint>& constraints) const;
 	double Curvature(int i) const;
 	double ScaledCurvature(int i) const;
 	CubicCurve2Set ToCubicCurve() const;
 
 	void Resample();
 	void ComputeMigrationRates();
-	void Migrate(const Box2D& domain, const ScalarField2D& terrain);
+	void Migrate(
+		const Box2D& domain, 
+		const Grid2<Vector2>& terrainGrad,
+		const std::vector<PointConstraint>& constraints
+	);
 	std::vector<Vector2> DoCutoff(int cutoffIndex, int j);
 	std::vector<Vector2> DoAvulsion(int startIndex, const ScalarField2D& bedrock);
 
@@ -75,7 +102,9 @@ class MeanderSimulation
 {
 private:
 	ScalarField2D terrain;
+	Grid2<Vector2> terrainGradient;
 	std::vector<Channel> channels;
+	std::vector<PointConstraint> constraints;
 
 public:
 	// Simulation parameters
@@ -99,6 +128,7 @@ public:
 
 	// User control
 	void AddChannel(const Channel& ch);
+	void AddPointConstraint(const PointConstraint& c);
 	void TriggerAvulsion();
 
 	// Simulation
