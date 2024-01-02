@@ -30,5 +30,12 @@ If you use this code in any way, please credit the original article:
 }
 ```	
 
+### Additional notes
+There are great resources on the web on the topic that did not make it into the final paper but still deserve to be mentioned. Here is a non-exhaustive list:
+* [Meander - Robert Hodgin](https://roberthodgin.com/project/meander): a procedural system for generating historical maps of rivers that never existed. Insanely good visualization, and describe the core components of the migration in a very accessible manner. Go take a look!
+* [Procedural Hydrology, Nicholas McDonald](https://nickmcd.me/2023/12/12/meandering-rivers-in-particle-based-hydraulic-erosion-simulations/#meandering-river-simulation): on top of [his first blog post](https://nickmcd.me/2020/04/15/procedural-hydrology/) on erosion simulation, this second one that came out in December allows to reproduce very convincing meandering rivers over an entire terrain using a particle-based system. I did not look into the (very) detailed blog post that describe the method yet, but the visuals are great.
+* [Meandering River - code exploration & simulation, onformative](https://vimeo.com/107158489): cool video showing some simulation of meandering rivers. Mesmerizing as always!
+
+
 ### Missing
 There are still some things missing from the original paper, which might be added in the future. A full list of what is missing will added here in the future.
