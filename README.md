@@ -38,4 +38,4 @@ There are great resources on the web on the topic that did not make it into the 
 
 
 ### Missing
-There are still some things missing from the original paper, which might be added in the future. A full list of what is missing will added here in the future.
+There are still some things missing from the original paper. A full list of what is missing will added here in the future.
